@@ -3,6 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+from collections import defaultdict
 
 
 # with open("C:/Users/Lenovo/Desktop/大肠杆菌基因序列.txt", "r") as f:
@@ -334,6 +335,44 @@ def FrequentWordsWithMismatches(Text,k,d):
 # d=1
 # pttern=FrequentWordsWithMismatches(text,k,d)
 
+def neighbour(pattern, mismatch, words):
+    if mismatch == 0:
+        words.add(pattern)
+    else:
+        bases = ['A', 'T', 'C', 'G']
+        for i in range(len(pattern)):
+            for j in range(len(bases)):
+                new_pattern = pattern[:i] + bases[j] + pattern[i+1:]
+                if mismatch <= 1:
+                    words.add(new_pattern)
+                else:
+                    neighbour(new_pattern, mismatch-1, words)
+
+def FrequentWordsWithMismatches_rev(text,k,d):
+    allfrequentwords = defaultdict(int)
+    for i in range(len(text) - k + 1):
+        frequentwords = set()
+        neighbour(text[i:i + k], d, frequentwords)
+        for words in frequentwords:
+            allfrequentwords[words] += 1
+    for t in allfrequentwords.keys():
+        reverse_k = ReverseComplement(t)
+        for i in range(len(text) - k + 1):
+            if HammingDistance(text[i:i + k], reverse_k) <= d:
+                allfrequentwords[t] += 1
+    result = set()
+    for t in allfrequentwords.keys():
+        if allfrequentwords[t] == max(allfrequentwords.values()):
+            result.add(t)
+            result.add(ReverseComplement(t))
+    for i in result:
+        print(i, end=" ")
+    return allfrequentwords
+
+# text = 'ACGTTGCATGTCGCATGATGCATGAGAGCT'
+# k, d = 4, 1
+# result=FrequentWordsWithMismatches_rev(text,k,d)
+
 
 def Minimize_Skew(genome):
     skew_value = 0
@@ -377,7 +416,7 @@ def Find_min_skew(genome):
 # genome = 'CCTATCGGT'
 # result=Find_min_skew(genome)
 
-def Draw_DC_picture(genome):
+def Draw_GC_picture(genome):
     skew = [0]
     for i, base in enumerate(genome, 1): 
         if base.upper() == 'G':
@@ -389,6 +428,51 @@ def Draw_DC_picture(genome):
     plt.plot(skew)
     return skew
 
-genome = data
-result=Draw_DC_picture(genome)
-    
+# genome = data
+# result=Draw_GC_picture(genome)
+
+def Compute_prefix_function(text):
+    t_len = len(text)
+    s = [0] * t_len
+    border = 0
+
+    for i in range(1, t_len):
+        while (border > 0) and (text[i] != text[border]):
+            border = s[border - 1]
+        if text[i] == text[border]:
+            border += 1
+        else:
+            border = 0
+        s[i] = border
+    return s
+
+def Find_pattern(text,pattern):
+    """
+    Find all the occurrences of the pattern in the text
+    and return a list of all positions in the text
+    where the pattern starts in the text.
+    """
+    p_len = len(pattern)
+    t_len = len(text)
+    result = []
+    ref_str = "".join([pattern, "$", text])
+    rs_len = len(ref_str)
+    prefix_arr = Compute_prefix_function(ref_str)
+    for i in range(p_len+1, rs_len):
+        if prefix_arr[i] == p_len:
+            result.append(i - 2*p_len)
+    return result
+
+# text="GATATATGCATATACTT"
+# pattern="ATAT"
+# result=Find_pattern(text,pattern)
+
+def Find_pattern_Approximate(text,pattern,d):
+     return [i\
+            for i in range(len(text)-len(pattern)+1)\
+            if HammingDistance(pattern,text[i:i+len(pattern)])<=d]
+
+# text="CGCCCGAATCCAGAACGCATTCCCATATTTCGGGACCACTGGCCTCCACGGTACGGACGTCAATCAAATGCCTAGCGGCTTGTGGTTTCTCCTACGCTCC"
+# pattern="ATTCTGGA"
+# d=3
+# result=Find_pattern_Approximate(text,pattern,d)
