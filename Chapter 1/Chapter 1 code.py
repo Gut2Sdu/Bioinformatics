@@ -24,7 +24,7 @@ with open("C:/Users/Lenovo/Desktop/E-coli.txt", "r") as f:
 def PatternCount(Text, Pattern): 
     count = 0 
     for i in range(0, len(Text) - len(Pattern) + 1):
-        if text[i : len(Pattern) + i] == Pattern:
+        if Text[i : len(Pattern) + i] == Pattern:
             count = count + 1 
     return count
 
